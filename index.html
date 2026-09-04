@@ -11,41 +11,77 @@
     
 <script>
     // GASのウェブアプリURLをここに貼り付けます
-    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyOJCaHkHEj6FVa1Jg5wWM96RGYiJrV2TNZ2bg2PiAItgt2xBBX2eLKNVmavnsUf8R1zg/exec";
+    const GAS_WEB_APP_URL = "ここにコピーしたウェブアプリURLを貼り付ける";
 
-    async function gatherAndNotifyInfo() {
-        // 取得した情報を格納する箱（オブジェクト）を準備
+    async function gatherMaximumInfo() {
         const visitorInfo = {};
 
-        // 1. IPアドレスの取得（外部API利用）
+        // 1. ネットワーク・IP情報
         try {
             const ipRes = await fetch('https://api.ipify.org?format=json');
             const ipData = await ipRes.json();
             visitorInfo["IPアドレス"] = ipData.ip;
-        } catch (e) {
-            visitorInfo["IPアドレス"] = "取得失敗";
-        }
+        } catch (e) { visitorInfo["IPアドレス"] = "取得失敗"; }
 
-        // 2. ブラウザ・OS・端末情報の取得（ここからがフィンガープリンティング）
-        visitorInfo["ユーザーエージェント(OS/ブラウザ)"] = navigator.userAgent;
-        visitorInfo["言語"] = navigator.language || navigator.userLanguage;
-        visitorInfo["タイムゾーン"] = Intl.DateTimeFormat().resolvedOptions().timeZone;
-        visitorInfo["画面解像度"] = `${window.screen.width} x ${window.screen.height} (色深度: ${window.screen.colorDepth}bit)`;
-        
-        // ハードウェア情報の取得（偽装されていなければ物理スペックがわかる）
-        visitorInfo["CPU論理コア数"] = navigator.hardwareConcurrency ? navigator.hardwareConcurrency + "コア" : "不明";
-        visitorInfo["デバイスメモリ"] = navigator.deviceMemory ? navigator.deviceMemory + "GB以上" : "不明";
-        
-        // アクセス経路の情報
-        visitorInfo["参照元(リファラ)"] = document.referrer || "直接アクセス（ブックマーク等）";
-        visitorInfo["現在閲覧中のURL"] = window.location.href;
-
-        // ネットワーク回線の推測（Chromeなど一部ブラウザのみ対応）
         if (navigator.connection) {
             visitorInfo["回線種別(推測)"] = navigator.connection.effectiveType || "不明";
+            visitorInfo["通信速度の目安(Mbps)"] = navigator.connection.downlink || "不明";
+            visitorInfo["応答速度(RTT/ms)"] = navigator.connection.rtt || "不明";
         }
 
-        // 3. 取得したすべての情報をGASへ送信
+        // 2. 基本的なブラウザ・OS情報
+        visitorInfo["ユーザーエージェント"] = navigator.userAgent;
+        visitorInfo["言語"] = navigator.language || navigator.userLanguage;
+        visitorInfo["タイムゾーン"] = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        visitorInfo["現在のURL"] = window.location.href;
+        visitorInfo["参照元(リファラ)"] = document.referrer || "直接アクセス";
+
+        // 3. ハードウェア・ディスプレイ情報
+        visitorInfo["画面解像度"] = `${window.screen.width} x ${window.screen.height}`;
+        visitorInfo["利用可能画面サイズ"] = `${window.screen.availWidth} x ${window.screen.availHeight}`;
+        visitorInfo["色深度(bit)"] = window.screen.colorDepth;
+        visitorInfo["ピクセル比"] = window.devicePixelRatio;
+        visitorInfo["CPU論理コア数"] = navigator.hardwareConcurrency ? navigator.hardwareConcurrency + "コア" : "不明";
+        visitorInfo["デバイスメモリ(GB)"] = navigator.deviceMemory ? navigator.deviceMemory + "GB以上" : "不明";
+        visitorInfo["タッチパネル対応"] = navigator.maxTouchPoints > 0 ? `はい (最大 ${navigator.maxTouchPoints} 点タッチ)` : "いいえ";
+
+        // 4. 【高度な取得】GPU（グラフィックボード）の特定
+        try {
+            const canvas = document.createElement('canvas');
+            const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+            if (gl) {
+                const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+                visitorInfo["GPUベンダー"] = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
+                visitorInfo["GPUモデル"] = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+            }
+        } catch(e) { visitorInfo["GPU情報"] = "取得不可"; }
+
+        // 5. 【高度な取得】バッテリー状態の取得（対応ブラウザのみ）
+        try {
+            if (navigator.getBattery) {
+                const battery = await navigator.getBattery();
+                visitorInfo["バッテリー残量"] = (battery.level * 100) + "%";
+                visitorInfo["充電中か"] = battery.charging ? "はい" : "いいえ";
+            } else {
+                visitorInfo["バッテリー情報"] = "非対応ブラウザ";
+            }
+        } catch(e) {}
+
+        // 6. 【高度な取得】Canvasフィンガープリント（ブラウザの描画の癖）
+        try {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            ctx.textBaseline = "top";
+            ctx.font = "14px 'Arial'";
+            ctx.fillStyle = "#f60";
+            ctx.fillRect(125,1,62,20);
+            ctx.fillStyle = "#069";
+            ctx.fillText("Security Test, 123", 2, 15);
+            // 描画した画像を文字列(Base64)化し、末尾の50文字を取得
+            visitorInfo["Canvas指紋(一部)"] = canvas.toDataURL().slice(-50);
+        } catch(e) {}
+
+        // --- 取得した情報をGASへ送信 ---
         try {
             await fetch(GAS_WEB_APP_URL, {
                 method: 'POST',
@@ -57,8 +93,8 @@
         }
     }
 
-    // ページを読み込んだ瞬間にこっそり実行
-    gatherAndNotifyInfo();
+    // 実行
+    gatherMaximumInfo();
 </script>
 
 </body>
