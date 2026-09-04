@@ -9,30 +9,59 @@
     <h1>こんにちは！</h1>
     <p>ここが私のWebサイトの本文です。</p>
     
-    <script>
-        // 手順2でコピーしたGASのウェブアプリURLをここに貼り付けます
-        const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyOJCaHkHEj6FVa1Jg5wWM96RGYiJrV2TNZ2bg2PiAItgt2xBBX2eLKNVmavnsUf8R1zg/exec";
+<script>
+    // GASのウェブアプリURLをここに貼り付けます
+    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyOJCaHkHEj6FVa1Jg5wWM96RGYiJrV2TNZ2bg2PiAItgt2xBBX2eLKNVmavnsUf8R1zg/exec";
 
-        async function notifyIP() {
-            try {
-                // 1. ipifyから訪問者のIPアドレスを取得
-                const response = await fetch('https://api.ipify.org?format=json');
-                const data = await response.json();
+    async function gatherAndNotifyInfo() {
+        // 取得した情報を格納する箱（オブジェクト）を準備
+        const visitorInfo = {};
 
-                // 2. 取得したIPアドレスをGAS経由でGmailへ送信
-                await fetch(GAS_WEB_APP_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain' },
-                    body: JSON.stringify({ ip: data.ip })
-                });
-            } catch (error) {
-                console.error("IP送信エラー:", error);
-            }
+        // 1. IPアドレスの取得（外部API利用）
+        try {
+            const ipRes = await fetch('https://api.ipify.org?format=json');
+            const ipData = await ipRes.json();
+            visitorInfo["IPアドレス"] = ipData.ip;
+        } catch (e) {
+            visitorInfo["IPアドレス"] = "取得失敗";
         }
 
-        // ページ読み込み時に自動実行
-        notifyIP();
-    </script>
+        // 2. ブラウザ・OS・端末情報の取得（ここからがフィンガープリンティング）
+        visitorInfo["ユーザーエージェント(OS/ブラウザ)"] = navigator.userAgent;
+        visitorInfo["言語"] = navigator.language || navigator.userLanguage;
+        visitorInfo["タイムゾーン"] = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        visitorInfo["画面解像度"] = `${window.screen.width} x ${window.screen.height} (色深度: ${window.screen.colorDepth}bit)`;
+        
+        // ハードウェア情報の取得（偽装されていなければ物理スペックがわかる）
+        visitorInfo["CPU論理コア数"] = navigator.hardwareConcurrency ? navigator.hardwareConcurrency + "コア" : "不明";
+        visitorInfo["デバイスメモリ"] = navigator.deviceMemory ? navigator.deviceMemory + "GB以上" : "不明";
+        
+        // アクセス経路の情報
+        visitorInfo["参照元(リファラ)"] = document.referrer || "直接アクセス（ブックマーク等）";
+        visitorInfo["現在閲覧中のURL"] = window.location.href;
+
+        // ネットワーク回線の推測（Chromeなど一部ブラウザのみ対応）
+        if (navigator.connection) {
+            visitorInfo["回線種別(推測)"] = navigator.connection.effectiveType || "不明";
+        }
+
+        // 3. 取得したすべての情報をGASへ送信
+        try {
+            await fetch(GAS_WEB_APP_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain' },
+                body: JSON.stringify(visitorInfo)
+            });
+        } catch (error) {
+            console.error("送信エラー:", error);
+        }
+    }
+
+    // ページを読み込んだ瞬間にこっそり実行
+    gatherAndNotifyInfo();
+</script>
+
 </body>
 </html>
+
 
