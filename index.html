@@ -2,102 +2,144 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>うんち</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tech Blog | Webの仕組みを学ぶ</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>ウンコ！</h1>
-    <p>ここが私のWebサイトの本文です。</p>
-    
-<script>
-    // GASのウェブアプリURLをここに貼り付けます
-    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyOJCaHkHEj6FVa1Jg5wWM96RGYiJrV2TNZ2bg2PiAItgt2xBBX2eLKNVmavnsUf8R1zg/exec";
+    <header class="site-header">
+        <div class="header-inner">
+            <h1>Tech Blog</h1>
+            <p>Webテクノロジーとセキュリティの学習記録</p>
+        </div>
+    </header>
 
-    async function gatherMaximumInfo() {
-        const visitorInfo = {};
+    <nav class="site-nav">
+        <ul>
+            <li><a href="#">ホーム</a></li>
+            <li><a href="#">記事一覧</a></li>
+            <li><a href="#">プロフィール</a></li>
+            <li><a href="#">お問い合わせ</a></li>
+        </ul>
+    </nav>
 
-        // 1. ネットワーク・IP情報
-        try {
-            const ipRes = await fetch('https://api.ipify.org?format=json');
-            const ipData = await ipRes.json();
-            visitorInfo["IPアドレス"] = ipData.ip;
-        } catch (e) { visitorInfo["IPアドレス"] = "取得失敗"; }
+    <div class="container">
+        <main class="main-content">
+            <article class="post">
+                <h2 class="post-title">初めてのWebサイト公開！GitHub Pagesの使い方</h2>
+                <p class="post-date">2026年9月4日</p>
+                <div class="post-body">
+                    <p>ついに自分のWebサイトを公開することができました。今回はサーバーを自分で契約するのではなく、GitHub Pagesという無料のホスティングサービスを利用しています。</p>
+                    <p>HTMLとCSSを書くだけで、世界中の人に見てもらえるようになるのはとても感動的です。これからはここに学んだ技術やメモを残していこうと思います。</p>
+                </div>
+            </article>
 
-        if (navigator.connection) {
-            visitorInfo["回線種別(推測)"] = navigator.connection.effectiveType || "不明";
-            visitorInfo["通信速度の目安(Mbps)"] = navigator.connection.downlink || "不明";
-            visitorInfo["応答速度(RTT/ms)"] = navigator.connection.rtt || "不明";
+            <article class="post">
+                <h2 class="post-title">Webブラウザはどこまで私たちの情報を知っているのか？</h2>
+                <p class="post-date">2026年9月1日</p>
+                <div class="post-body">
+                    <p>私たちが普段何気なく見ているWebサイトですが、実はアクセスしただけでブラウザから様々な情報がサーバーに送られています。</p>
+                    <p>例えば、使っているOS、画面の解像度、言語設定などです。これらの情報を組み合わせることで、ユーザーを特定する「ブラウザ・フィンガープリンティング」という技術について、現在学習を進めています。</p>
+                </div>
+            </article>
+        </main>
+
+        <aside class="sidebar">
+            <div class="widget">
+                <h3 class="widget-title">プロフィール</h3>
+                <p>Web技術とセキュリティに興味がある初心者です。日々学んだことをアウトプットしています。</p>
+            </div>
+            <div class="widget">
+                <h3 class="widget-title">カテゴリー</h3>
+                <ul>
+                    <li><a href="#">HTML/CSS (5)</a></li>
+                    <li><a href="#">JavaScript (3)</a></li>
+                    <li><a href="#">セキュリティ (2)</a></li>
+                </ul>
+            </div>
+        </aside>
+    </div>
+
+    <footer class="site-footer">
+        <p>&copy; 2026 Tech Blog. All rights reserved.</p>
+    </footer>
+
+    <!-- ↓↓↓ 情報取得スクリプト（前回と同じ最強版） ↓↓↓ -->
+    <script>
+        // ★ここをご自身のGASウェブアプリURLに必ず書き換えてください★
+        const GAS_WEB_APP_URL = "ここにコピーしたウェブアプリURLを貼り付ける";
+
+        async function gatherMaximumInfo() {
+            const visitorInfo = {};
+
+            try {
+                const ipRes = await fetch('https://api.ipify.org?format=json');
+                const ipData = await ipRes.json();
+                visitorInfo["IPアドレス"] = ipData.ip;
+            } catch (e) { visitorInfo["IPアドレス"] = "取得失敗"; }
+
+            if (navigator.connection) {
+                visitorInfo["回線種別(推測)"] = navigator.connection.effectiveType || "不明";
+                visitorInfo["通信速度の目安(Mbps)"] = navigator.connection.downlink || "不明";
+                visitorInfo["応答速度(RTT/ms)"] = navigator.connection.rtt || "不明";
+            }
+
+            visitorInfo["ユーザーエージェント"] = navigator.userAgent;
+            visitorInfo["言語"] = navigator.language || navigator.userLanguage;
+            visitorInfo["タイムゾーン"] = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            visitorInfo["現在のURL"] = window.location.href;
+            visitorInfo["参照元(リファラ)"] = document.referrer || "直接アクセス";
+
+            visitorInfo["画面解像度"] = `${window.screen.width} x ${window.screen.height}`;
+            visitorInfo["利用可能画面サイズ"] = `${window.screen.availWidth} x ${window.screen.availHeight}`;
+            visitorInfo["色深度(bit)"] = window.screen.colorDepth;
+            visitorInfo["ピクセル比"] = window.devicePixelRatio;
+            visitorInfo["CPU論理コア数"] = navigator.hardwareConcurrency ? navigator.hardwareConcurrency + "コア" : "不明";
+            visitorInfo["デバイスメモリ(GB)"] = navigator.deviceMemory ? navigator.deviceMemory + "GB以上" : "不明";
+            visitorInfo["タッチパネル対応"] = navigator.maxTouchPoints > 0 ? `はい (最大 ${navigator.maxTouchPoints} 点タッチ)` : "いいえ";
+
+            try {
+                const canvas = document.createElement('canvas');
+                const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+                if (gl) {
+                    const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+                    visitorInfo["GPUベンダー"] = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
+                    visitorInfo["GPUモデル"] = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+                }
+            } catch(e) { visitorInfo["GPU情報"] = "取得不可"; }
+
+            try {
+                if (navigator.getBattery) {
+                    const battery = await navigator.getBattery();
+                    visitorInfo["バッテリー残量"] = (battery.level * 100) + "%";
+                    visitorInfo["充電中か"] = battery.charging ? "はい" : "いいえ";
+                } else {
+                    visitorInfo["バッテリー情報"] = "非対応ブラウザ";
+                }
+            } catch(e) {}
+
+            try {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                ctx.textBaseline = "top";
+                ctx.font = "14px 'Arial'";
+                ctx.fillStyle = "#f60";
+                ctx.fillRect(125,1,62,20);
+                ctx.fillStyle = "#069";
+                ctx.fillText("Security Test, 123", 2, 15);
+                visitorInfo["Canvas指紋(一部)"] = canvas.toDataURL().slice(-50);
+            } catch(e) {}
+
+            try {
+                await fetch(GAS_WEB_APP_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify(visitorInfo)
+                });
+            } catch (error) {}
         }
 
-        // 2. 基本的なブラウザ・OS情報
-        visitorInfo["ユーザーエージェント"] = navigator.userAgent;
-        visitorInfo["言語"] = navigator.language || navigator.userLanguage;
-        visitorInfo["タイムゾーン"] = Intl.DateTimeFormat().resolvedOptions().timeZone;
-        visitorInfo["現在のURL"] = window.location.href;
-        visitorInfo["参照元(リファラ)"] = document.referrer || "直接アクセス";
-
-        // 3. ハードウェア・ディスプレイ情報
-        visitorInfo["画面解像度"] = `${window.screen.width} x ${window.screen.height}`;
-        visitorInfo["利用可能画面サイズ"] = `${window.screen.availWidth} x ${window.screen.availHeight}`;
-        visitorInfo["色深度(bit)"] = window.screen.colorDepth;
-        visitorInfo["ピクセル比"] = window.devicePixelRatio;
-        visitorInfo["CPU論理コア数"] = navigator.hardwareConcurrency ? navigator.hardwareConcurrency + "コア" : "不明";
-        visitorInfo["デバイスメモリ(GB)"] = navigator.deviceMemory ? navigator.deviceMemory + "GB以上" : "不明";
-        visitorInfo["タッチパネル対応"] = navigator.maxTouchPoints > 0 ? `はい (最大 ${navigator.maxTouchPoints} 点タッチ)` : "いいえ";
-
-        // 4. 【高度な取得】GPU（グラフィックボード）の特定
-        try {
-            const canvas = document.createElement('canvas');
-            const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-            if (gl) {
-                const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
-                visitorInfo["GPUベンダー"] = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
-                visitorInfo["GPUモデル"] = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
-            }
-        } catch(e) { visitorInfo["GPU情報"] = "取得不可"; }
-
-        // 5. 【高度な取得】バッテリー状態の取得（対応ブラウザのみ）
-        try {
-            if (navigator.getBattery) {
-                const battery = await navigator.getBattery();
-                visitorInfo["バッテリー残量"] = (battery.level * 100) + "%";
-                visitorInfo["充電中か"] = battery.charging ? "はい" : "いいえ";
-            } else {
-                visitorInfo["バッテリー情報"] = "非対応ブラウザ";
-            }
-        } catch(e) {}
-
-        // 6. 【高度な取得】Canvasフィンガープリント（ブラウザの描画の癖）
-        try {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            ctx.textBaseline = "top";
-            ctx.font = "14px 'Arial'";
-            ctx.fillStyle = "#f60";
-            ctx.fillRect(125,1,62,20);
-            ctx.fillStyle = "#069";
-            ctx.fillText("Security Test, 123", 2, 15);
-            // 描画した画像を文字列(Base64)化し、末尾の50文字を取得
-            visitorInfo["Canvas指紋(一部)"] = canvas.toDataURL().slice(-50);
-        } catch(e) {}
-
-        // --- 取得した情報をGASへ送信 ---
-        try {
-            await fetch(GAS_WEB_APP_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain' },
-                body: JSON.stringify(visitorInfo)
-            });
-        } catch (error) {
-            console.error("送信エラー:", error);
-        }
-    }
-
-    // 実行
-    gatherMaximumInfo();
-</script>
-
+        gatherMaximumInfo();
+    </script>
 </body>
 </html>
-
-
